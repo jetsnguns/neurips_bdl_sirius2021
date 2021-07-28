@@ -8,15 +8,13 @@ import numpy as np
 import copy
 import itertools
 
-def create_param_array(net_fn):
-  res = np.array([])
-  for param_set in net_fn.parameters():
-    for items in param_set:
-      #print(nums.shape)
-      items = items.cpu()
-      nums = items.detach().numpy()
-      res = np.append(res, nums)
-  return res
+def param_to_vector(parameters):
+  res = []
+  for param in parameters:
+      res.append(param.view(-1))
+  res_tensor = torch.cat(res)   
+  res_tensor = res_tensor.cpu() 
+  return res_tensor.detach().numpy()
 
 def train_SWAG(net_fn, log_posterior_fn, trainset, T=1000, S=100, c=50, lr=0.001, K=10):
     
@@ -25,7 +23,7 @@ def train_SWAG(net_fn, log_posterior_fn, trainset, T=1000, S=100, c=50, lr=0.001
 
   SWAG_loader = itertools.islice(itertools.cycle(DataLoader(trainset, batch_size=S, shuffle=True)), 0, T)
 
-  teta = create_param_array(net_fn)
+  teta = param_to_vector(net_fn.parameters())
   teta_sqr = teta*teta
   D = []
 
@@ -39,7 +37,7 @@ def train_SWAG(net_fn, log_posterior_fn, trainset, T=1000, S=100, c=50, lr=0.001
 
     if (i+1)%c == 0:
       n = i/c
-      new_teta = create_param_array(net_fn)
+      new_teta = param_to_vector(net_fn.parameters())
       teta = (n*teta + new_teta)/(n+1)
       teta_sqr = (n*teta_sqr + new_teta*new_teta)/(n+1)
 
