@@ -4,7 +4,8 @@ import torch
 #from torch.utils.data import DataLoader, TensorDataset
 #import torch.optim as optim
 
-import eval.py
+import eval
+import copy
 
 import numpy as np
 from numpy.random import normal
