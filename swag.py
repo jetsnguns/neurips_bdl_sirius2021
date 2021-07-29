@@ -44,4 +44,4 @@ def train_SWAG(net_fn, log_posterior_fn, trainset, T=1000, S=100, c=50, lr=0.001
       D.append(new_teta - teta)
 
   D = np.array(D)
-  return teta, teta_sqr, D
+  return teta, teta_sqr - teta*teta, D
