@@ -35,7 +35,7 @@ def sample_from_swag(theta_swa, diag, D, d, K):
   z2 = normal(size = K)
   #print(z1)
   #print(z2)
-  theta_res = theta_swa + 1 / sqrt(2) * np.dot(diag, z1) + 1 / sqrt(2 * K - 2) * np.dot(D, K)
+  theta_res = theta_swa + 1 / sqrt(2) * diag*z1 + 1 / sqrt(2 * K - 2) * np.dot(D, K)
   return theta_res
 
 def sample_from_swag1(theta_swa, diag, D, d, K):
@@ -47,11 +47,11 @@ def sample_from_swag1(theta_swa, diag, D, d, K):
   z2 = multivariate_normal(mean2, cov2, (-1, K))
   print(z1)
   print(z2)
-  #theta_res = theta_swa + 1 / sqrt(2) * np.dot(diag, z1) + 1 / sqrt(2 * K - 2) * np.dot(D, K)
+  #theta_res = theta_swa + 1 / sqrt(2) * diag*z1 + 1 / sqrt(2 * K - 2) * np.dot(D, K)
   theta_res = 0
   return theta_res
 
-def average_models(net_fn, test_loader, theta_swa, diag, D, d, K, S)
+def average_models(net_fn, test_loader, theta_swa, diag, D, d, K, S):
   p_y = 0
 
   for i in range(S):
