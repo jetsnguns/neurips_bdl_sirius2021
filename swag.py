@@ -1,4 +1,4 @@
-import torch 
+import torch
 from torch.utils.data import DataLoader
 import torch.optim as optim
 
@@ -14,12 +14,12 @@ def param_to_vector(parameters):
   res_tensor = res_tensor.cpu() 
   return res_tensor.detach().numpy()
 
-def train_SWAG(net_fn, log_posterior_fn, trainset, T=1000, S=100, c=50, lr=0.001, K=10):
+def train_SWAG(net_fn, log_posterior_fn, trainset, T=1000, batch_size=100, c=50, lr=0.001, K=10):
     
   momentum_decay = 0.9
   optimizer = optim.SGD(net_fn.parameters(), lr=lr, momentum=momentum_decay)
 
-  SWAG_loader = itertools.islice(itertools.cycle(DataLoader(trainset, batch_size=S, shuffle=True)), 0, T)
+  SWAG_loader = itertools.islice(itertools.cycle(DataLoader(trainset, batch_size=batch_size, shuffle=True)), 0, T)
 
   teta = param_to_vector(net_fn.parameters())
   teta_sqr = teta*teta
@@ -34,7 +34,7 @@ def train_SWAG(net_fn, log_posterior_fn, trainset, T=1000, S=100, c=50, lr=0.001
     optimizer.step()
 
     if (i+1)%c == 0:
-      n = i/c
+      n = (i+1)/c
       new_teta = param_to_vector(net_fn.parameters())
       teta = (n*teta + new_teta)/(n+1)
       teta_sqr = (n*teta_sqr + new_teta*new_teta)/(n+1)
@@ -44,4 +44,4 @@ def train_SWAG(net_fn, log_posterior_fn, trainset, T=1000, S=100, c=50, lr=0.001
       D.append(new_teta - teta)
 
   D = np.array(D)
-  return teta, teta_sqr - teta * teta, D
+  return teta, teta_sqr - teta*teta, D
