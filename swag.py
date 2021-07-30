@@ -1,19 +1,18 @@
 import torch
 from torch.utils.data import DataLoader
 import torch.optim as optim
-
-import numpy as np
 import copy
 import itertools
+import torch.nn.utils.convert_parameters as convert
 
 
-def param_to_vector(parameters):
-    res = []
-    for param in parameters:
-        res.append(param.view(-1))
-    res_tensor = torch.cat(res)
-    res_tensor = res_tensor.cpu()
-    return res_tensor.detach().numpy()
+# def param_to_vector(parameters):
+#     res = []
+#     for param in parameters:
+#         res.append(param.view(-1))
+#     res_tensor = torch.cat(res)
+#     res_tensor = res_tensor.cpu()
+#     return res_tensor.detach().numpy()
 
 
 def train_SWAG(net_fn, log_posterior_fn, trainset, T=1000, batch_size=100, c=50, lr=0.001, K=10):
@@ -22,10 +21,12 @@ def train_SWAG(net_fn, log_posterior_fn, trainset, T=1000, batch_size=100, c=50,
 
     SWAG_loader = itertools.islice(itertools.cycle(DataLoader(trainset, batch_size=batch_size, shuffle=True)), 0, T)
 
-    teta = param_to_vector(net_fn.parameters())
+    teta = convert.parameters_to_vector(net_fn.parameters())
     teta_sqr = teta * teta
+    teta = teta.cuda()
+    teta_sqr = teta_sqr.cuda()
+    # D = torch.tensor([])
     D = []
-
     for i, data in enumerate(SWAG_loader):
         optimizer.zero_grad()
         model_state_dict = copy.deepcopy(net_fn.state_dict())
@@ -36,13 +37,15 @@ def train_SWAG(net_fn, log_posterior_fn, trainset, T=1000, batch_size=100, c=50,
 
         if (i + 1) % c == 0:
             n = (i + 1) / c
-            new_teta = param_to_vector(net_fn.parameters())
+            new_teta = convert.parameters_to_vector(net_fn.parameters())
             teta = (n * teta + new_teta) / (n + 1)
             teta_sqr = (n * teta_sqr + new_teta * new_teta) / (n + 1)
 
             if len(D) > K:
                 del D[0]
-            D.append(new_teta - teta)
+            D.append((new_teta - teta).tolist())
 
-    D = np.array(D)
-    return teta, teta_sqr - teta * teta, D
+    D = torch.tensor(D)
+    diag = torch.clamp(teta_sqr - teta * teta, 1.e-30)
+
+    return teta, diag, D
