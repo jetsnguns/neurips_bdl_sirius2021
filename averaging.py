@@ -4,9 +4,10 @@ import torch
 #from torch.utils.data import DataLoader, TensorDataset
 #import torch.optim as optim
 
-import eval.py
+import eval
 
 import numpy as np
+import copy
 from numpy.random import normal
 from numpy.random import multivariate_normal
 
@@ -40,22 +41,8 @@ def sample_from_swag(theta_swa, diag, D, d, K):
     z2 = normal(size=K)
     # print(z1)
     # print(z2)
-    diag = diag ** (1/2)
-    theta_res = theta_swa + 1 / sqrt(2) * diag * z1 + 1 / sqrt(2 * K - 2) * np.dot(D, z2)
-    return theta_res
-
-#additional version of function to try multivariate for checking
-def sample_from_swag1(theta_swa, diag, D, d, K):
-    mean1 = np.zeros(d)
-    mean2 = np.zeros(K)
-    cov1 = np.eye(d)
-    cov2 = np.eye(K)
-    z1 = multivariate_normal(mean1, cov1, (-1, d))
-    z2 = multivariate_normal(mean2, cov2, (-1, K))
-    print(z1)
-    print(z2)
-    # theta_res = theta_swa + 1 / sqrt(2) * np.dot(diag, z1) + 1 / sqrt(2 * K - 2) * np.dot(D, K)
-    theta_res = 0
+    diag = abs(diag) ** (1/2)
+    theta_res = theta_swa + 1 / sqrt(2) * diag * z1 + 1 / sqrt(2 * K - 2) * np.dot(z2, D)
     return theta_res
 
 
