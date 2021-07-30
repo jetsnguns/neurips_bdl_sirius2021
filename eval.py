@@ -1,5 +1,5 @@
 import torch
-
+import torch.nn.functional as F
 
 def get_accuracy_fn(net_fn, batch, model_state_dict):
     x, y = batch
