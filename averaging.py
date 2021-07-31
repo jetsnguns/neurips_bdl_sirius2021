@@ -29,12 +29,9 @@ def average_models(net_fn, test_loader, theta_swa, diag, D, S):
 
     for i in range(S):
         theta_swag = sample_from_swag(theta_swa, diag, D)
-        # tensor = torch.from_numpy(theta_swag).cuda()
-        # tensor = tensor.float()
         convert.vector_to_parameters(theta_swag, net_fn.parameters())
 
-        model_state_dict = copy.deepcopy(net_fn.state_dict())
-        test_acc, all_test_probs = eval.evaluate_fn(net_fn, test_loader, model_state_dict)
+        test_acc, all_test_probs = eval.evaluate_fn(net_fn, test_loader)
 
         print(test_acc)
         p_y += 1 / S * all_test_probs
