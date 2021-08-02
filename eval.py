@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 
 
-def get_accuracy_fn(net_fn, batch, model_state_dict):
+def get_accuracy_fn(net_fn, batch, model_state_dict=None):
     x, y = batch
     if torch.cuda.is_available():
         x = x.cuda()
@@ -10,8 +10,9 @@ def get_accuracy_fn(net_fn, batch, model_state_dict):
     # get logits
     net_fn.eval()
     with torch.no_grad():
-        for name, param in net_fn.named_parameters():
-            param.data = model_state_dict[name]
+        if model_state_dict is not None:
+            for name, param in net_fn.named_parameters():
+                param.data = model_state_dict[name]
         logits = net_fn(x)
     net_fn.train()
     # get log probs
@@ -23,7 +24,7 @@ def get_accuracy_fn(net_fn, batch, model_state_dict):
     return accuracy, probs
 
 
-def evaluate_fn(net_fn, data_loader, model_state_dict):
+def evaluate_fn(net_fn, data_loader, model_state_dict=None):
     sum_accuracy = 0
     all_probs = []
     for x, y in data_loader:

@@ -15,7 +15,11 @@ import torch.nn.utils.convert_parameters as convert
 #     return res_tensor.detach().numpy()
 
 
-def train_SWAG(net_fn, log_posterior_fn, trainset, T=1000, batch_size=100, c=50, lr=0.001, K=10):
+def train_SWAG(net_fn, log_posterior_fn, trainset,
+               T=1000, batch_size=100, c=50, lr=0.001, K=10,
+               prior_variance=5.):
+    print(type(log_posterior_fn))
+
     momentum_decay = 0.9
     optimizer = optim.SGD(net_fn.parameters(), lr=lr, momentum=momentum_decay)
 
@@ -31,7 +35,7 @@ def train_SWAG(net_fn, log_posterior_fn, trainset, T=1000, batch_size=100, c=50,
         optimizer.zero_grad()
         model_state_dict = copy.deepcopy(net_fn.state_dict())
 
-        loss = - log_posterior_fn(model_state_dict, data)
+        loss = - log_posterior_fn(net_fn, data, prior_variance)
         loss.backward()
         optimizer.step()
 
