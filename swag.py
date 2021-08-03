@@ -5,6 +5,8 @@ import copy
 import itertools
 import torch.nn.utils.convert_parameters as convert
 
+from tqdm.auto import tqdm
+
 
 # def param_to_vector(parameters):
 #     res = []
@@ -31,9 +33,8 @@ def train_SWAG(net_fn, log_posterior_fn, trainset,
     teta_sqr = teta_sqr.cuda()
     # D = torch.tensor([])
     D = []
-    for i, data in enumerate(SWAG_loader):
+    for i, data in tqdm(enumerate(SWAG_loader), total=T):
         optimizer.zero_grad()
-        model_state_dict = copy.deepcopy(net_fn.state_dict())
 
         loss = - log_posterior_fn(net_fn, data, prior_variance)
         loss.backward()

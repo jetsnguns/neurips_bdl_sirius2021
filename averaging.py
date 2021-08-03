@@ -6,6 +6,8 @@ import torch.nn.utils.convert_parameters as convert
 import copy
 import eval
 
+from tqdm.auto import tqdm
+
 
 def sample_from_swag(theta_swa, diag, D):
     d = len(theta_swa)
@@ -27,12 +29,13 @@ def sample_from_swag(theta_swa, diag, D):
 def average_models(net_fn, test_loader, theta_swa, diag, D, S):
     p_y = 0
 
-    for i in range(S):
-        theta_swag = sample_from_swag(theta_swa, diag, D)
-        convert.vector_to_parameters(theta_swag, net_fn.parameters())
+    with tqdm(range(S)) as pbar:
+        for _ in pbar:
+            theta_swag = sample_from_swag(theta_swa, diag, D)
+            convert.vector_to_parameters(theta_swag, net_fn.parameters())
 
-        test_acc, all_test_probs = eval.evaluate_fn(net_fn, test_loader)
+            test_acc, all_test_probs = eval.evaluate_fn(net_fn, test_loader)
 
-        print(test_acc)
-        p_y += 1 / S * all_test_probs
+            pbar.set_postfix(acc=test_acc)
+            p_y += 1 / S * all_test_probs
     return p_y
