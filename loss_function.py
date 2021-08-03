@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 
 
-def log_likelihood_fn(net_fn, batch):
+def log_likelihood_fn(net_fn, batch, return_logits=False):
     """Computes the log-likelihood."""
     x, y = batch
     if torch.cuda.is_available():
@@ -17,7 +17,10 @@ def log_likelihood_fn(net_fn, batch):
     labels = F.one_hot(y.to(torch.int64), num_classes= num_classes)
     softmax_xent = torch.sum(labels * F.log_softmax(logits, dim=1))
 
-    return softmax_xent
+    if return_logits:
+        return logits, softmax_xent
+    else:
+        return softmax_xent
 
 
 def log_prior_fn(net_fn, prior_variance):
@@ -29,7 +32,12 @@ def log_prior_fn(net_fn, prior_variance):
     return exp_term + norm_constant
 
 
-def log_posterior_fn(net_fn, batch, prior_variance):
-    log_lik = log_likelihood_fn(net_fn, batch)
+def log_posterior_fn(net_fn, batch, prior_variance, return_logits=False):
     log_prior = log_prior_fn(net_fn, prior_variance)
-    return log_lik + log_prior
+
+    if return_logits:
+        logits, log_lik = log_likelihood_fn(net_fn, batch, return_logits)
+        return logits, log_lik + log_prior
+    else:
+        log_lik = log_likelihood_fn(net_fn, batch)
+        return log_lik + log_prior
