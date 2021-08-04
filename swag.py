@@ -1,29 +1,21 @@
 import torch
 from torch.utils.data import DataLoader
 import torch.optim as optim
-import copy
 import itertools
 import torch.nn.utils.convert_parameters as convert
 
 from tqdm.auto import tqdm
-
-
-# def param_to_vector(parameters):
-#     res = []
-#     for param in parameters:
-#         res.append(param.view(-1))
-#     res_tensor = torch.cat(res)
-#     res_tensor = res_tensor.cpu()
-#     return res_tensor.detach().numpy()
+from torch.optim.lr_scheduler import CyclicLR
 
 
 def train_SWAG(net_fn, log_posterior_fn, trainset,
                T=1000, batch_size=100, c=50, lr=0.001, K=10,
-               prior_variance=5.):
-    print(type(log_posterior_fn))
+               prior_variance=5., momentum=0.):
+    # print(type(log_posterior_fn))
 
-    momentum_decay = 0.9
-    optimizer = optim.SGD(net_fn.parameters(), lr=lr, momentum=momentum_decay)
+    optimizer = optim.SGD(net_fn.parameters(), lr=lr, momentum=momentum)
+    # scheduler = CyclicLR(optimizer, base_lr=0.001, max_lr=0.002, step_size_up=T, cycle_momentum=False)
+
 
     SWAG_loader = itertools.islice(itertools.cycle(DataLoader(trainset, batch_size=batch_size, shuffle=True)), 0, T)
 
@@ -31,7 +23,6 @@ def train_SWAG(net_fn, log_posterior_fn, trainset,
     teta_sqr = teta * teta
     teta = teta.cuda()
     teta_sqr = teta_sqr.cuda()
-    # D = torch.tensor([])
     D = []
     for i, data in tqdm(enumerate(SWAG_loader), total=T):
         optimizer.zero_grad()
@@ -39,6 +30,7 @@ def train_SWAG(net_fn, log_posterior_fn, trainset,
         loss = - log_posterior_fn(net_fn, data, prior_variance)
         loss.backward()
         optimizer.step()
+        # scheduler.step()
 
         if (i + 1) % c == 0:
             n = (i + 1) / c
